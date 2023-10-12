@@ -2,14 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdlib.h>
+#define LIBSSH2_OPENSSL
+#include <openssl/evp.h>
 #include <libssh2.h>
 
-static const char *hostname = "127.0.0.1";
+
+static const char *hostname = "134.209.128.51";
 static const char *commandline = "uptime";
-static const char *pubkey = "/home/username/.ssh/id_rsa.pub";
-static const char *privkey = "/home/username/.ssh/id_rsa";
-static const char *username = "user";
-static const char *password = "password";
+// static const char *pubkey = "/home/username/.ssh/id_rsa.pub";
+// static const char *privkey = "/home/username/.ssh/id_rsa";
+static const char *username = "Mv3TefpM54AaAfL46Jm293U7f";
+static const char *password = "";
 
 static int waitsocket(libssh2_socket_t socket_fd, LIBSSH2_SESSION *session)
 {
@@ -67,18 +70,18 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    if(argc > 1) {
-        hostname = argv[1];  /* must be ip address only */
-    }
-    if(argc > 2) {
-        username = argv[2];
-    }
-    if(argc > 3) {
-        password = argv[3];
-    }
-    if(argc > 4) {
-        commandline = argv[4];
-    }
+    // if(argc > 1) {
+    //     hostname = argv[1];  /* must be ip address only */
+    // }
+    // if(argc > 2) {
+    //     username = argv[2];
+    // }
+    // if(argc > 3) {
+    //     password = argv[3];
+    // }
+    // if(argc > 4) {
+    //     commandline = argv[4];
+    // }
 
     rc = libssh2_init(0);
     if(rc) {
@@ -112,12 +115,18 @@ int main(int argc, char *argv[])
         goto shutdown;
     }
 
+    libssh2_session_method_pref(session, LIBSSH2_METHOD_KEX, "diffie-hellman-group14-sha1");
+    
+    // // Disable host key verification
+    // libssh2_session_set_hostkey_check(session, 0);
+
     /* tell libssh2 we want it all done non-blocking */
     libssh2_session_set_blocking(session, 0);
 
     /* ... start it up. This will trade welcome banners, exchange keys,
      * and setup crypto, compression, and MAC layers
      */
+    
     while((rc = libssh2_session_handshake(session, sock)) ==
           LIBSSH2_ERROR_EAGAIN);
     if(rc) {
@@ -134,6 +143,11 @@ int main(int argc, char *argv[])
     /* read all hosts from here */
     libssh2_knownhost_readfile(nh, "known_hosts",
                                LIBSSH2_KNOWNHOST_FILE_OPENSSH);
+
+    if(!nh) {
+        /* eeek, do cleanup here */
+        return 2;
+    }
 
     /* store all known hosts to here */
     libssh2_knownhost_writefile(nh, "dumpfile",
@@ -163,7 +177,7 @@ int main(int argc, char *argv[])
     }
     libssh2_knownhost_free(nh);
 
-    if(strlen(password) != 0) {
+    // if(strlen(password) != 0) {
         /* We could authenticate via password */
         while((rc = libssh2_userauth_password(session, username, password)) ==
               LIBSSH2_ERROR_EAGAIN);
@@ -171,18 +185,18 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Authentication by password failed.\n");
             goto shutdown;
         }
-    }
-    else {
-        /* Or by public key */
-        while((rc = libssh2_userauth_publickey_fromfile(session, username,
-                                                        pubkey, privkey,
-                                                        password)) ==
-              LIBSSH2_ERROR_EAGAIN);
-        if(rc) {
-            fprintf(stderr, "Authentication by public key failed.\n");
-            goto shutdown;
-        }
-    }
+    // }
+    // else {
+    //     /* Or by public key */
+    //     while((rc = libssh2_userauth_publickey_fromfile(session, username,
+    //                                                     pubkey, privkey,
+    //                                                     password)) ==
+    //           LIBSSH2_ERROR_EAGAIN);
+    //     if(rc) {
+    //         fprintf(stderr, "Authentication by public key failed.\n");
+    //         goto shutdown;
+    //     }
+    // }
 
 #if 0
     libssh2_trace(session, ~0);

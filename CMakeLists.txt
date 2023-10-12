@@ -50,4 +50,4 @@ add_executable(${PROJECT_NAME}
     "src/main.c"
 )
 
-target_link_libraries(${PROJECT_NAME} ws2_32 Libssh2::libssh2_static OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(${PROJECT_NAME} ws2_32 crypt32 Libssh2::libssh2_static OpenSSL::SSL OpenSSL::Crypto)
